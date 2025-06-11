@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لعبة السيارة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2ea44f">
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f5f5f5; font-family: 'Tahoma', sans-serif; text-align: center; }
+        canvas { display: block; margin: 0 auto; background-color: white; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: red; display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOver">انتهت اللعبة!</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverDiv = document.getElementById('gameOver');
+        const carWidth = 50, carHeight = 80;
+        let carX, carY, obstacles = [], score = 0, gameOver = false, gameSpeed = 3;
+
+        function initGame() {
+            canvas.width = window.innerWidth * 0.9;
+            canvas.height = window.innerHeight * 0.8;
+            carX = canvas.width / 2 - carWidth / 2;
+            carY = canvas.height - carHeight - 20;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameOver) {
+                update(); draw(); requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function update() {
+            obstacles.forEach(o => o.y += gameSpeed);
+            if (Math.random() < 0.02) obstacles.push({x: Math.random() * (canvas.width - 50), y: -50, width: 50, height: 50});
+            obstacles = obstacles.filter(o => o.y < canvas.height);
+            if (score % 50 === 0) gameSpeed += 0.1;
+            if (checkCollision()) { gameOver = true; gameOverDiv.style.display = 'block'; }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'red'; ctx.fillRect(carX, carY, carWidth, carHeight);
+            ctx.fillStyle = 'blue'; obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
+            ctx.fillStyle = 'black'; ctx.font = '24px Arial'; ctx.fillText(`النقاط: ${score}`, 20, 30);
+        }
+
+        function checkCollision() {
+            for (const o of obstacles) {
+                if (carX < o.x + o.width && carX + carWidth > o.x && carY < o.y + o.height && carY + carHeight > o.y) return true;
+            }
+            return false;
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameOver) {
+                const clickX = e.clientX - canvas.getBoundingClientRect().left;
+                carX += clickX < canvas.width / 2 ? -40 : 40;
+                carX = Math.max(0, Math.min(canvas.width - carWidth, carX));
+                score++;
+            }
+        });
+
+        window.onload = initGame;
+        window.onresize = initGame;
+    </script>
+</body>
+</html>
